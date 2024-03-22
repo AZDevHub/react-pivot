@@ -1,17 +1,38 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import ReactDOM from 'react-dom';
+import PivotTableUI from 'react-pivottable/PivotTableUI';
+import 'react-pivottable/pivottable.css';
+import TableRenderers from 'react-pivottable/TableRenderers';
+import Plot from 'react-plotly.js';
+import createPlotlyRenderers from 'react-pivottable/PlotlyRenderers';
+import utils from './utils.js';
+const PlotlyRenderers = createPlotlyRenderers(Plot);
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const SQLStatement = process.argv[2];
+const result = utils.getConnection().then((connection) => {
+  connection.query(SQLStatement, (err, result) => {
+    if (err) throw err;
+    return result;
+  })
+})
+const data = result;
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+class App extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = props;
+    }
+
+    render() {
+        return (
+            <PivotTableUI
+                data={data}
+                onChange={s => this.setState(s)}
+                renderers={Object.assign({}, TableRenderers, PlotlyRenderers)}
+                {...this.state}
+            />
+        );
+    }
+}
+
+ReactDOM.render(<App />, document.body);
